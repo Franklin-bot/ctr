@@ -23,8 +23,8 @@ namespace ctr{
         }
     };
 
-    static constexpr RegexOp Concat{U'&', 2};
-    static constexpr RegexOp Alternation{U'|', 1};
+    static constexpr RegexOp Concat{U'&', 2, true};
+    static constexpr RegexOp Alternation{U'|', 1, true};
     static constexpr RegexOp Kleene{U'*', 3, false};
     static constexpr RegexOp NewGroup{U'(', 0};
     static constexpr RegexOp CloseGroup{U')', 0};

@@ -119,7 +119,7 @@ string_t NFA::ShuntingYard(string_t pattern){
 
     for (char_t c : pattern){
 
-        if (iswalnum(c)){
+        if (isalnum(c)){
             res += c;
         } else if (c == NewGroup.op){
             operator_stack.push(NewGroup);
