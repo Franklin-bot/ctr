@@ -1,4 +1,5 @@
 #pragma once
+#include "../common/constants.hpp"
 
 #include <vector>
 
@@ -36,7 +37,7 @@ namespace ctr {
     class SymbolTransition : public Transition {
     public:
 
-        SymbolTransition(State* next_state, char symbol) : Transition(next_state), symbol(symbol) {};
+        SymbolTransition(State* next_state, char_t symbol) : Transition(next_state), symbol(symbol) {};
 
         char GetSymbol() const {
             return symbol;
@@ -46,7 +47,7 @@ namespace ctr {
         }
 
     private:
-        char symbol;
+        char_t symbol;
     };
 
 

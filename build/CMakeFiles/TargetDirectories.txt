@@ -1,0 +1,10 @@
+/Users/FranklinZhao/projects/compile-time-regex/build/CMakeFiles/edit_cache.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/CMakeFiles/rebuild_cache.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/src/common/CMakeFiles/edit_cache.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/src/common/CMakeFiles/rebuild_cache.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/src/parser/CMakeFiles/parser.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/src/parser/CMakeFiles/edit_cache.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/src/parser/CMakeFiles/rebuild_cache.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/test/parser/CMakeFiles/parser_tests.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/test/parser/CMakeFiles/edit_cache.dir
+/Users/FranklinZhao/projects/compile-time-regex/build/test/parser/CMakeFiles/rebuild_cache.dir

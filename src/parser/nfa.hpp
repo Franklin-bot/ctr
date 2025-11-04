@@ -1,4 +1,5 @@
 #include "automaton.hpp"
+#include "../common/constants.hpp"
 #include <memory>
 
 namespace ctr{
@@ -40,12 +41,16 @@ public:
     }
 
     static std::unique_ptr<NFA> EpsilonNFA();
-    static std::unique_ptr<NFA> SymbolNFA(char c);
+    static std::unique_ptr<NFA> SymbolNFA(char_t c);
     static void KleeneNFA(NFA& nfa);
     static void UnionNFA(NFA& nfa_1, NFA&& nfa_2);
-    static std::unique_ptr<NFA> NFAFromPattern(std::string_view pattern);
+    static void ConcatNFA(NFA& nfa_1, NFA&& nfa_2);
+    // static std::unique_ptr<NFA> NFAFromPattern(string_t pattern);
+    static string_t InsertConcat(string_t pattern);
+    static string_t ShuntingYard(string_t pattern);
 
 private:
+
 
     std::vector<std::unique_ptr<State>> states;
     State* start_state;
