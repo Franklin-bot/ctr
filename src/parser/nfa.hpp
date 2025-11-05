@@ -8,13 +8,31 @@ class NFA {
 public:
 
     NFA() = default;
-    NFA(std::vector<std::unique_ptr<State>> states) : states(std::move(states)){}
+    NFA(std::vector<std::unique_ptr<State>>&& states) : states(std::move(states)){}
+
+    NFA(const NFA& other) = delete;
+    NFA& operator=(const NFA&) = delete;
+    NFA(NFA&& other) noexcept = default;
+    NFA& operator=(NFA&& other) noexcept = default;
+    ~NFA() = default;
+
+    [[nodiscard]] static NFA EpsilonNFA();
+    [[nodiscard]] static NFA SymbolNFA(char_t c);
+
+    void KleeneNFA();
+    void UnionNFA(NFA&& other);
+    void ConcatNFA(NFA&& other);
+
+    [[nodiscard]] static NFA NFAFromRegex(string_t& pattern);
+    static string_t InsertConcat(const string_t& pattern);
+    static string_t ShuntingYard(string_t& pattern);
+    string_t RegexFromNFA();
 
     void AddState(std::unique_ptr<State> new_state){
         states.push_back(std::move(new_state));
     }
 
-    void AddStates(std::vector<std::unique_ptr<State>>& new_states){
+    void AddStates(std::vector<std::unique_ptr<State>>&& new_states){
         states.reserve(states.size() + new_states.size());
         for (auto& new_state : new_states) {
             states.push_back(std::move(new_state));
@@ -40,21 +58,12 @@ public:
         finish_state = state;
     }
 
-    static std::unique_ptr<NFA> EpsilonNFA();
-    static std::unique_ptr<NFA> SymbolNFA(char_t c);
-    static void KleeneNFA(NFA& nfa);
-    static void UnionNFA(NFA& nfa_1, NFA&& nfa_2);
-    static void ConcatNFA(NFA& nfa_1, NFA&& nfa_2);
-    // static std::unique_ptr<NFA> NFAFromPattern(string_t pattern);
-    static string_t InsertConcat(string_t pattern);
-    static string_t ShuntingYard(string_t pattern);
-
 private:
 
 
     std::vector<std::unique_ptr<State>> states;
-    State* start_state;
-    State* finish_state;
+    State* start_state = nullptr;
+    State* finish_state = nullptr;
 
 };
 

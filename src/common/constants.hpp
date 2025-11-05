@@ -47,6 +47,10 @@ namespace ctr{
 
     }
 
+    static bool IsRegexOp(char_t c){
+        return c == Concat.op || c == Alternation.op || c == Kleene.op;
+    }
+
     static bool IsAtom(char_t c){
         return std::iswalnum(c) || c == U'.';
     }

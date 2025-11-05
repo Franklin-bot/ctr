@@ -1,6 +1,5 @@
 #include "../../src/parser/nfa.hpp"
 
-#include <cwchar>
 #include <gtest/gtest.h>
 
 
@@ -33,7 +32,7 @@ TEST(ConcatentationTest, Groups){
 
 TEST(ShuntingYardTest, Atoms){
 
-    ctr::string_t pattern = ctr::NFA::InsertConcat("ab");
+    ctr::string_t pattern = "ab";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern), "ab&");
 
     ctr::string_t pattern2 = ctr::NFA::InsertConcat("ab|c");
@@ -42,74 +41,71 @@ TEST(ShuntingYardTest, Atoms){
 }
 
 TEST(ShuntingYardTest, SingleLiteral){
-    ctr::string_t pattern = ctr::NFA::InsertConcat("a");
+    ctr::string_t pattern = "a";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern), "a");
 }
 
 TEST(ShuntingYardTest, SimpleConcat){
-    ctr::string_t pattern = ctr::NFA::InsertConcat("ab");
+    ctr::string_t pattern = "ab";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern), "ab&");
 
-    ctr::string_t pattern2 = ctr::NFA::InsertConcat("abc");
+    ctr::string_t pattern2 = "abc";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern2), "ab&c&");
 }
 
 TEST(ShuntingYardTest, Alternation){
-    ctr::string_t pattern = ctr::NFA::InsertConcat("a|b");
+    ctr::string_t pattern = "a|b";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern), "ab|");
 
-    ctr::string_t pattern2 = ctr::NFA::InsertConcat("a|b|c");
+    ctr::string_t pattern2 = "a|b|c";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern2), "ab|c|");
 }
 
 TEST(ShuntingYardTest, UnaryOperators){
-    ctr::string_t pattern1 = ctr::NFA::InsertConcat("a*");
+    ctr::string_t pattern1 = "a*";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern1), "a*");
 }
 
 TEST(ShuntingYardTest, ConcatWithUnary){
-    ctr::string_t pattern1 = ctr::NFA::InsertConcat("ab*");
+    ctr::string_t pattern1 = "ab*";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern1), "ab*&");
 }
 
 TEST(ShuntingYardTest, ParenthesesAndConcat){
-    ctr::string_t pattern1 = ctr::NFA::InsertConcat("(ab)");
+    ctr::string_t pattern1 = "(ab)";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern1), "ab&");
 
-    ctr::string_t pattern2 = ctr::NFA::InsertConcat("(ab)*");
+    ctr::string_t pattern2 = "(ab)*";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern2), "ab&*");
 
-    ctr::string_t pattern3 = ctr::NFA::InsertConcat("a(b|c)d");
+    ctr::string_t pattern3 = "a(b|c)d";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern3), "abc|&d&");
 }
 
 TEST(ShuntingYardTest, Precedence){
-    // '*' > '&' > '|'
-    ctr::string_t pattern1 = ctr::NFA::InsertConcat("a|b*c");
+    ctr::string_t pattern1 = "a|b*c";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern1), "ab*c&|");
 
-    ctr::string_t pattern2 = ctr::NFA::InsertConcat("(a|b)*c");
+    ctr::string_t pattern2 = "(a|b)*c";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern2), "ab|*c&");
 
-    ctr::string_t pattern3 = ctr::NFA::InsertConcat("a(b|c)*d");
-    ctr::print(pattern3);
+    ctr::string_t pattern3 = "a(b|c)*d";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern3), "abc|*&d&");
 }
 
 TEST(ShuntingYardTest, NestedAndMixed){
-    ctr::string_t pattern1 = ctr::NFA::InsertConcat("a|(bc)d");
+    ctr::string_t pattern1 = "a|(bc)d";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern1), "abc&d&|");
 
-    ctr::string_t pattern2 = ctr::NFA::InsertConcat("a(bc)|d");
+    ctr::string_t pattern2 = "a(bc)|d";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern2), "abc&&d|");
 
-    ctr::string_t pattern3 = ctr::NFA::InsertConcat("(a|b)(c|d)");
+    ctr::string_t pattern3 = "(a|b)(c|d)";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern3), "ab|cd|&");
 }
 
 TEST(ShuntingYardTest, LongerExpression){
-    // ((a|b)&(c|d)*)&e|f  with implicit concats
-    ctr::string_t pattern = ctr::NFA::InsertConcat("(a|b)(c|d)*e|f");
+    ctr::string_t pattern = "(a|b)(c|d)*e|f";
     EXPECT_EQ(ctr::NFA::ShuntingYard(pattern), "ab|cd|*&e&f|");
 }
 

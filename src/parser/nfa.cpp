@@ -4,101 +4,93 @@
 
 namespace ctr{
 
-std::unique_ptr<NFA> NFA::EpsilonNFA(){
+NFA NFA::EpsilonNFA(){
 
     std::unique_ptr<State> s0 = std::make_unique<State>();
     std::unique_ptr<State> s1 = std::make_unique<State>();
     s0->AddTransition(EpsilonTransition(s1.get()));
 
-    std::unique_ptr<NFA> nfa = std::make_unique<NFA>();
+    NFA nfa = NFA();
 
-    nfa->SetStartState(s0.get());
-    nfa->SetFinishState(s1.get());
-    nfa->AddState(std::move(s0));
-    nfa->AddState(std::move(s1));
+    nfa.SetStartState(s0.get());
+    nfa.SetFinishState(s1.get());
+    nfa.AddState(std::move(s0));
+    nfa.AddState(std::move(s1));
 
     return nfa;
 }
 
-std::unique_ptr<NFA> NFA::SymbolNFA(char_t c){
+NFA NFA::SymbolNFA(char_t c){
 
     std::unique_ptr<State> s0 = std::make_unique<State>();
     std::unique_ptr<State> s1 = std::make_unique<State>();
     s0->AddTransition(SymbolTransition(s1.get(), c));
 
-    std::unique_ptr<NFA> nfa = std::make_unique<NFA>();
+    NFA nfa = NFA();
 
-
-    nfa->AddState(std::move(s0));
-    nfa->AddState(std::move(s1));
-    nfa->SetStartState(s0.get());
-    nfa->SetFinishState(s1.get());
+    nfa.SetStartState(s0.get());
+    nfa.SetFinishState(s1.get());
+    nfa.AddState(std::move(s0));
+    nfa.AddState(std::move(s1));
 
     return nfa;
 }
 
-void NFA::KleeneNFA(NFA& nfa) {
-
-    State* start = nfa.GetStartState();
-    State* finish = nfa.GetFinishState();
+void NFA::KleeneNFA() {
 
     auto s0 = std::make_unique<State>();
     auto s1 = std::make_unique<State>();
 
-    s0->AddTransition(EpsilonTransition(start));
+    s0->AddTransition(EpsilonTransition(start_state));
     s0->AddTransition(EpsilonTransition(s1.get()));
-    finish->AddTransition(EpsilonTransition(start));
-    finish->AddTransition(EpsilonTransition(s1.get()));
+    finish_state->AddTransition(EpsilonTransition(start_state));
+    finish_state->AddTransition(EpsilonTransition(s1.get()));
 
-    nfa.SetStartState(s0.get());
-    nfa.SetFinishState(s1.get());
+    SetStartState(s0.get());
+    SetFinishState(s1.get());
 
-    nfa.AddState(std::move(s0));
-    nfa.AddState(std::move(s1));
+    AddState(std::move(s0));
+    AddState(std::move(s1));
 }
 
-void NFA::UnionNFA(NFA& nfa_1, NFA&& nfa_2){
+void NFA::UnionNFA(NFA&& other){
 
-    State* start_1 = nfa_1.GetStartState();
-    State* finish_1 = nfa_1.GetFinishState();
-    State* start_2 = nfa_2.GetStartState();
-    State* finish_2 = nfa_2.GetFinishState();
+    State* other_start_state = other.GetStartState();
+    State* other_finish_state = other.GetFinishState();
 
-    nfa_1.AddStates(nfa_2.GetStates());
+    AddStates(std::move(other.GetStates()));
 
     std::unique_ptr<State> s0 = std::make_unique<State>();
     std::unique_ptr<State> s1 = std::make_unique<State>();
-    s0->AddTransition(EpsilonTransition(start_1));
-    s0->AddTransition(EpsilonTransition(start_2));
-    finish_1->AddTransition(EpsilonTransition(s1.get()));
-    finish_2->AddTransition(EpsilonTransition(s1.get()));
+    s0->AddTransition(EpsilonTransition(start_state));
+    s0->AddTransition(EpsilonTransition(other_start_state));
+    finish_state->AddTransition(EpsilonTransition(s1.get()));
+    other_finish_state->AddTransition(EpsilonTransition(s1.get()));
 
-    nfa_1.SetStartState(s0.get());
-    nfa_1.SetFinishState(s1.get());
+    SetStartState(s0.get());
+    SetFinishState(s1.get());
 
-    nfa_1.AddState(std::move(s0));
-    nfa_1.AddState(std::move(s1));
-
-}
-
-void NFA::ConcatNFA(NFA& nfa_1, NFA&& nfa_2){
-
-    State* start_1 = nfa_1.GetStartState();
-    State* finish_1 = nfa_1.GetFinishState();
-    State* start_2 = nfa_2.GetStartState();
-    State* finish_2 = nfa_2.GetFinishState();
-
-    nfa_1.SetFinishState(finish_2);
-    finish_1->AddTransition(EpsilonTransition(start_2));
-    nfa_1.AddStates(nfa_2.GetStates());
+    AddState(std::move(s0));
+    AddState(std::move(s1));
 
 }
-string_t NFA::InsertConcat(string_t pattern){
+
+void NFA::ConcatNFA(NFA&& other){
+    State* other_start  = other.GetStartState();
+    State* other_finish = other.GetFinishState();
+
+    finish_state->AddTransition(EpsilonTransition(other_start));
+
+    AddStates(std::move(other.GetStates()));
+    SetFinishState(other_finish);
+}
+
+string_t NFA::InsertConcat(const string_t& pattern){
 
     if (pattern.empty()) return {};
 
-    string_t res{pattern[0]};
-    char_t prev = pattern[0];
+    string_t res{pattern.front()};
+    char_t prev = pattern.front();
 
     for (int i = 1; i < pattern.length(); i++){
         char_t curr = pattern[i];
@@ -112,14 +104,16 @@ string_t NFA::InsertConcat(string_t pattern){
     return res;
 }
 
-string_t NFA::ShuntingYard(string_t pattern){
+string_t NFA::ShuntingYard(string_t& pattern){
+
+    pattern = InsertConcat(pattern);
 
     string_t res{};
     std::stack<RegexOp> operator_stack;
 
     for (char_t c : pattern){
 
-        if (isalnum(c)){
+        if (std::isalnum(c)){
             res += c;
         } else if (c == NewGroup.op){
             operator_stack.push(NewGroup);
@@ -130,7 +124,6 @@ string_t NFA::ShuntingYard(string_t pattern){
             }
             operator_stack.pop();
         } else {
-
             RegexOp curr_op = GetRegexOp(c);
             while (!operator_stack.empty() && operator_stack.top() != NewGroup && (operator_stack.top().precedence > curr_op.precedence || (operator_stack.top().precedence == curr_op.precedence && curr_op.left_assoc))){
                 res += operator_stack.top().op;
@@ -149,10 +142,40 @@ string_t NFA::ShuntingYard(string_t pattern){
 
 }
     
-// std::unique_ptr<NFA> NFA::NFAFromPattern(string_t pattern){
-//
-//     string_t postfix = ShuntingYard(InsertConcat(pattern));
-//
-// }
+NFA NFA::NFAFromRegex(string_t& pattern){
+
+    string_t postfix = ShuntingYard(pattern);
+    std::stack<NFA> stk;
+
+    for (char_t c : postfix){
+        if (std::isalnum(c)){
+            stk.push(SymbolNFA(c));
+        } else {
+
+            RegexOp regex_op = GetRegexOp(c);
+            if (regex_op == Kleene){
+                stk.top().KleeneNFA();
+            } else if (regex_op == Concat){
+                NFA& nfa2 = stk.top();
+                stk.pop();
+                stk.top().ConcatNFA(std::move(nfa2));
+           } else {
+                NFA& nfa2 = stk.top();
+                stk.pop();
+                stk.top().UnionNFA(std::move(nfa2));
+           }
+        }
+    }
+
+    NFA nfa = std::move(stk.top());
+    stk.pop();
+    return nfa;
+}
+
+string_t NFA::RegexFromNFA(){
+
+    string_t res{};
+
+}
 
 };
