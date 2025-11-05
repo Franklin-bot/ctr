@@ -1,5 +1,4 @@
 #include "automaton.hpp"
-#include "../common/constants.hpp"
 #include <memory>
 
 namespace ctr{
