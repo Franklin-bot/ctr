@@ -1,0 +1,20 @@
+version: '3'
+
+tasks:
+
+  install:
+    cmds:
+      - conan install . --output-folder=build --build=missing
+    
+  init:
+    deps: [install]
+    dir: build
+    cmds: 
+      - cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+    
+  build: 
+    dir: build
+    cmds:
+      - cmake --build .
+
+

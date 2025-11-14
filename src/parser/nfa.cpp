@@ -8,7 +8,7 @@ NFA NFA::EpsilonNFA(){
 
     std::unique_ptr<State> s0 = std::make_unique<State>();
     std::unique_ptr<State> s1 = std::make_unique<State>();
-    s0->AddTransition(EpsilonTransition(s1.get()));
+    s0->AddTransition(std::make_unique<EpsilonTransition>(s1.get()));
 
     NFA nfa = NFA();
 
@@ -24,7 +24,7 @@ NFA NFA::SymbolNFA(char_t c){
 
     std::unique_ptr<State> s0 = std::make_unique<State>();
     std::unique_ptr<State> s1 = std::make_unique<State>();
-    s0->AddTransition(SymbolTransition(s1.get(), c));
+    s0->AddTransition(std::make_unique<SymbolTransition>(s1.get(), c));
 
     NFA nfa = NFA();
 
@@ -41,10 +41,10 @@ void NFA::KleeneNFA() {
     auto s0 = std::make_unique<State>();
     auto s1 = std::make_unique<State>();
 
-    s0->AddTransition(EpsilonTransition(start_state));
-    s0->AddTransition(EpsilonTransition(s1.get()));
-    finish_state->AddTransition(EpsilonTransition(start_state));
-    finish_state->AddTransition(EpsilonTransition(s1.get()));
+    s0->AddTransition(std::make_unique<EpsilonTransition>(start_state));
+    s0->AddTransition(std::make_unique<EpsilonTransition>(s1.get()));
+    finish_state->AddTransition(std::make_unique<EpsilonTransition>(start_state));
+    finish_state->AddTransition(std::make_unique<EpsilonTransition>(s1.get()));
 
     SetStartState(s0.get());
     SetFinishState(s1.get());
@@ -62,10 +62,10 @@ void NFA::UnionNFA(NFA&& other){
 
     std::unique_ptr<State> s0 = std::make_unique<State>();
     std::unique_ptr<State> s1 = std::make_unique<State>();
-    s0->AddTransition(EpsilonTransition(start_state));
-    s0->AddTransition(EpsilonTransition(other_start_state));
-    finish_state->AddTransition(EpsilonTransition(s1.get()));
-    other_finish_state->AddTransition(EpsilonTransition(s1.get()));
+    s0->AddTransition(std::make_unique<EpsilonTransition>(start_state));
+    s0->AddTransition(std::make_unique<EpsilonTransition>(other_start_state));
+    finish_state->AddTransition(std::make_unique<EpsilonTransition>(s1.get()));
+    other_finish_state->AddTransition(std::make_unique<EpsilonTransition>(s1.get()));
 
     SetStartState(s0.get());
     SetFinishState(s1.get());
@@ -79,7 +79,7 @@ void NFA::ConcatNFA(NFA&& other){
     State* other_start  = other.GetStartState();
     State* other_finish = other.GetFinishState();
 
-    finish_state->AddTransition(EpsilonTransition(other_start));
+    finish_state->AddTransition(std::make_unique<EpsilonTransition>(other_start));
 
     AddStates(std::move(other.GetStates()));
     SetFinishState(other_finish);
@@ -96,7 +96,7 @@ string_t NFA::InsertConcat(const string_t& pattern){
         char_t curr = pattern[i];
 
         if ((IsAtom(prev) || IsQuantifier(prev) || IsClosedGroup(prev)) && (IsAtom(curr) || IsNewGroup(curr))){
-            res += Concat.op;
+            res += ConcatOp.op;
         }
         res += curr;
         prev = curr;
@@ -115,17 +115,17 @@ string_t NFA::ShuntingYard(string_t& pattern){
 
         if (std::isalnum(c)){
             res += c;
-        } else if (c == NewGroup.op){
-            operator_stack.push(NewGroup);
-        } else if (c == CloseGroup.op){
-            while (!operator_stack.empty() && operator_stack.top() != NewGroup){
+        } else if (c == NewGroupOp.op){
+            operator_stack.push(NewGroupOp);
+        } else if (c == CloseGroupOp.op){
+            while (!operator_stack.empty() && operator_stack.top() != NewGroupOp){
                 res += operator_stack.top().op;
                 operator_stack.pop();
             }
             operator_stack.pop();
         } else {
             RegexOp curr_op = GetRegexOp(c);
-            while (!operator_stack.empty() && operator_stack.top() != NewGroup && (operator_stack.top().precedence > curr_op.precedence || (operator_stack.top().precedence == curr_op.precedence && curr_op.left_assoc))){
+            while (!operator_stack.empty() && operator_stack.top() != NewGroupOp && (operator_stack.top().precedence > curr_op.precedence || (operator_stack.top().precedence == curr_op.precedence && curr_op.left_assoc))){
                 res += operator_stack.top().op;
                 operator_stack.pop();
             }
@@ -144,6 +144,7 @@ string_t NFA::ShuntingYard(string_t& pattern){
     
 NFA NFA::NFAFromRegex(string_t& pattern){
 
+    // Thompson's Algorithm
     string_t postfix = ShuntingYard(pattern);
     std::stack<NFA> stk;
 
@@ -153,9 +154,9 @@ NFA NFA::NFAFromRegex(string_t& pattern){
         } else {
 
             RegexOp regex_op = GetRegexOp(c);
-            if (regex_op == Kleene){
+            if (regex_op == KleeneOp){
                 stk.top().KleeneNFA();
-            } else if (regex_op == Concat){
+            } else if (regex_op == ConcatOp){
                 NFA& nfa2 = stk.top();
                 stk.pop();
                 stk.top().ConcatNFA(std::move(nfa2));
@@ -172,10 +173,72 @@ NFA NFA::NFAFromRegex(string_t& pattern){
     return nfa;
 }
 
-string_t NFA::RegexFromNFA(){
+std::unordered_map<State*, std::size_t> NFA::StateIndexMap() const{
 
-    string_t res{};
+    std::unordered_map<State*, std::size_t> StateToIndex;
+
+    for (const auto& state : states){
+        StateToIndex[state.get()] = StateToIndex.size();
+    }
+
+    return StateToIndex;
 
 }
+
+std::vector<std::vector<string_t>> NFA::InitialiseDP(std::unordered_map<State*, std::size_t>& state_index_map) const {
+
+    std::size_t n = states.size()+2;
+    std::vector<std::vector<string_t>> dp(n, std::vector<string_t>(n, {Empty}));
+    for (int i = 0; i < n; i++){
+        dp[i][i] = Epsilon;
+    }
+
+    for (const auto& state : states){
+        std::size_t src = state_index_map[state.get()];
+        for (const auto& transition : state->GetTransitions()){
+            std::size_t dst = state_index_map[transition->GetNextState()];
+
+            if (dp[src][dst] == string_t{Empty}){
+                dp[src][dst] = transition->GetSymbol();
+            } else {
+                dp[src][dst] += Alternation + transition->GetSymbol();
+            }
+        }
+    }
+
+    return dp;
+
+}
+
+string_t NFA::RegexFromNFA() const{
+
+    // Kleene's Algorithm
+
+    State s0 = State();
+    State sf = State();
+
+    std::unordered_map<State*, std::size_t> state_index_map = StateIndexMap();
+    std::vector<std::vector<string_t>> dp = InitialiseDP(state_index_map);
+    dp[state_index_map[&s0]][state_index_map[start_state]] = Epsilon;
+    dp[state_index_map[finish_state]][state_index_map[&sf]] = Epsilon;
+
+}
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 };

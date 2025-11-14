@@ -1,74 +1,55 @@
 #pragma once
 #include "../common/constants.hpp"
-
+#include <memory>
+#include <utility>
 #include <vector>
 
 namespace ctr {
 
-    class State;
+class State;
 
-    class Transition {
-    public:
+class Transition {
+public:
+    explicit Transition(State* next_state) : next_state(next_state) {}
+    virtual ~Transition() = default;                 // virtual dtor (important)
+    State* GetNextState() const { return next_state; }
 
-        explicit Transition(State* next_state) : next_state(next_state){}
+    virtual char_t GetSymbol() const = 0;            // make it pure virtual
 
-        State* GetNextState() const{
-            return next_state;
-        }
-
-    protected:
-        State* next_state;
-
-    };
-
-
-
-    class EpsilonTransition : public Transition {
-    public:
-        using Transition::Transition;
-
-        bool operator== (const EpsilonTransition& other){
-            return next_state == other.next_state;
-        }
-    };
-
-
-
-    class SymbolTransition : public Transition {
-    public:
-
-        SymbolTransition(State* next_state, char_t symbol) : Transition(next_state), symbol(symbol) {};
-
-        char GetSymbol() const {
-            return symbol;
-        }
-        bool operator== (const SymbolTransition& other){
-            return next_state == other.next_state && symbol == other.symbol;
-        }
-
-    private:
-        char_t symbol;
-    };
-
-
-
-
-    class State {
-    public:
-
-        State() = default;
-        State(std::vector<Transition> transitions) : transitions(std::move(transitions)){}
-
-        std::vector<Transition>& GetTransitions() {
-            return transitions;
-        }
-
-        void AddTransition(Transition transition) {
-            transitions.push_back(transition);
-        }
-
-    private:
-        std::vector<Transition> transitions;
-
-    };
+protected:
+    State* next_state;
 };
+
+class EpsilonTransition : public Transition {
+public:
+    using Transition::Transition;
+    char_t GetSymbol() const override { return Epsilon; }
+};
+
+class SymbolTransition : public Transition {
+public:
+    SymbolTransition(State* next_state, char_t symbol)
+        : Transition(next_state), symbol(symbol) {}
+    char_t GetSymbol() const override { return symbol; }
+private:
+    char_t symbol;
+};
+
+class State {
+public:
+    State() = default;
+    explicit State(std::vector<std::unique_ptr<Transition>> transitions)
+        : transitions(std::move(transitions)) {}
+
+    std::vector<std::unique_ptr<Transition>>& GetTransitions() { return transitions; }
+
+    void AddTransition(std::unique_ptr<Transition> transition) {
+        transitions.emplace_back(std::move(transition));
+    }
+
+private:
+    std::vector<std::unique_ptr<Transition>> transitions;
+};
+
+} // namespace ctr
+
