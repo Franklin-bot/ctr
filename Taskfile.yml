@@ -17,4 +17,9 @@ tasks:
     cmds:
       - cmake --build .
 
+  test:
+    dir: build
+    cmds:
+      - ctest -C Debug -V 
+
 

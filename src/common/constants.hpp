@@ -1,76 +1,38 @@
-#pragma once
 
-#include "encoding.hpp"
+namespace ctr {
 
-#include <cctype>
-#include <cstddef>
+    constexpr char LEFTPAREN = '(';
+    constexpr char RIGHTPAREN = ')';
+    constexpr char KLEENE = '*';
+    constexpr char ALT = '|';
+    constexpr char CONCAT = '&';
 
-namespace ctr{
+    constexpr int KLEENE_PRECEDENCE = 3;
+    constexpr int CONCAT_PRECEDENCE = 2;
+    constexpr int ALT_PRECEDENCE = 1;
 
-    static constexpr char_t Concat = U'·';
-    static constexpr char_t Alternation = U'|';
-    static constexpr char_t Kleene = U'*';
-    static constexpr char_t NewGroup = U'(';
-    static constexpr char_t CloseGroup = U')';
-    static constexpr char_t Epsilon = U'ε';
-    static constexpr char_t Empty = U'∅';
-
-
-    struct RegexOp {
-        char_t op;
-        int precedence = 0;
-        bool left_assoc = true;
-
-        bool operator== (const RegexOp& other) const {
-            return op == other.op && precedence == other.precedence;
-        }
-
-        bool operator!= (const RegexOp& other) const {
-            return op != other.op || precedence != other.precedence;
-        }
+    template<char C>
+    struct ch {
+        static constexpr char value = C;
     };
 
-    static constexpr RegexOp ConcatOp{Concat, 2};
-    static constexpr RegexOp AlternationOp{Alternation, 1};
-    static constexpr RegexOp KleeneOp{Kleene, 3, false};
-    static constexpr RegexOp NewGroupOp{NewGroup, 0};
-    static constexpr RegexOp CloseGroupOp{CloseGroup, 0};
-
-    static RegexOp GetRegexOp(char_t c){
-        switch(c){
-            case Concat:
-                return ConcatOp;
-            case Alternation:
-                return AlternationOp;
-            case Kleene:
-                return KleeneOp;
-            case NewGroup:
-                return NewGroupOp;
-            case CloseGroup:
-                return CloseGroupOp;
-            default:
-                throw std::invalid_argument("Input char must be a regex op");
-        }
-
+    consteval bool is_alphanumeric(char c) {
+        return (c >= 'A' && c <= 'Z') || 
+                (c >= 'a' && c <='z') ||
+                (c >= '0' && c <= '9');
     }
 
-    static bool IsRegexOp(char_t c){
-        return c == ConcatOp.op || c == AlternationOp.op || c == KleeneOp.op;
+    consteval bool is_operation(char c){
+        return c==KLEENE || c==CONCAT || c==ALT;
     }
 
-    static bool IsAtom(char_t c){
-        return std::iswalnum(c) || c == U'.';
+    template<char C>
+    consteval int precedence() {
+        if constexpr (C==KLEENE) return KLEENE_PRECEDENCE;
+        else if constexpr (C==CONCAT) return CONCAT_PRECEDENCE;
+        else if constexpr (C==ALT) return ALT_PRECEDENCE;
+        else return -1;
     }
+    
 
-    static bool IsQuantifier(char_t c){
-        return c == KleeneOp.op;
-    }
-
-    static bool IsNewGroup(char_t c){
-        return c == NewGroupOp.op;
-    }
-
-    static bool IsClosedGroup(char_t c){
-        return c == CloseGroupOp.op;
-    }
-};
+}
