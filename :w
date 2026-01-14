@@ -1,0 +1,17 @@
+#include "../../src/common/fixed_string.hpp"
+#include "../../src/common/pure/algos.hpp"
+
+#include <gtest/gtest.h>
+
+TEST(ShuntingYardTest, Atoms)
+{
+  constexpr ctr::fixed_string pattern = "a|b";
+
+  static_assert(std::is_same_v<ctr::ShuntingYard<"A">, ctr::deque<ctr::ch<'A'>>>);
+}
+
+int main(int argc, char** argv)
+{
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

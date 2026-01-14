@@ -1,3 +1,4 @@
+#pragma once
 #include <type_traits>
 
 namespace ctr {
@@ -13,6 +14,8 @@ constexpr auto push(stack<Ts...>, As...) -> stack<As..., Ts...>;
 // pop()
 template <class T, class... Ts>
 constexpr auto pop(stack<T, Ts...>) -> stack<Ts...>;
+
+constexpr auto pop(stack<>) -> stack<>;
 
 // top()
 template <class T, class... Ts>
@@ -89,8 +92,8 @@ using push_back_t = decltype(ctr::push_back(std::declval<D>(), std::declval<C>()
 // pair
 template <class A, class B>
 struct pair {
-    using first_type = A;
-    using second_type = B;
+  using first_type = A;
+  using second_type = B;
 };
 
 template <class>
