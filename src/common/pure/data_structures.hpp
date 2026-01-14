@@ -3,28 +3,29 @@
 namespace ctr {
 
 // Compile-time Stack
-template <class ... Ts> struct stack {};
+template <class... Ts>
+struct stack {};
 
 // push()
-template <class ... Ts, class ... As> 
+template <class... Ts, class... As>
 constexpr auto push(stack<Ts...>, As...) -> stack<As..., Ts...>;
 
 // pop()
-template <class T, class ... Ts> 
+template <class T, class... Ts>
 constexpr auto pop(stack<T, Ts...>) -> stack<Ts...>;
 
 // top()
-template <class T, class ... Ts> 
+template <class T, class... Ts>
 constexpr auto top(stack<T, Ts...>) -> T;
 
 using empty_stack = ctr::stack<>;
 constexpr auto top(stack<>) -> empty_stack;
 
 // empty()
-template<class>
+template <class>
 inline constexpr bool is_empty_stack_v = false;
 
-template<>
+template <>
 inline constexpr bool is_empty_stack_v<stack<>> = true;
 
 // is_stack()
@@ -41,24 +42,25 @@ template <class S>
 concept EmptyStack = is_stack_v<S> && is_empty_stack_v<S>;
 
 // Compile-time Deque
-template <class ... Ts> struct deque {};
+template <class... Ts>
+struct deque {};
 
-template <class ... Ts, class ... As>
+template <class... Ts, class... As>
 constexpr auto push_front(deque<Ts...>, As...) -> deque<As..., Ts...>;
 
-template <class ... Ts, class ... As>
+template <class... Ts, class... As>
 constexpr auto push_back(deque<Ts...>, As...) -> deque<Ts..., As...>;
 
-template <class T, class ... Ts>
+template <class T, class... Ts>
 constexpr auto pop_front(deque<T, Ts...>) -> deque<Ts...>;
 
-template <class T, class ... Ts>
+template <class T, class... Ts>
 constexpr auto pop_back(deque<Ts..., T>) -> deque<Ts...>;
 
-template <class T, class ... Ts>
+template <class T, class... Ts>
 constexpr auto front(deque<T, Ts...>) -> T;
 
-template <class T, class ... Ts>
+template <class T, class... Ts>
 constexpr auto back(deque<Ts..., T>) -> T;
 
 // is_deque()
@@ -91,10 +93,10 @@ struct pair {
     using second_type = B;
 };
 
-template<class>
+template <class>
 inline constexpr bool is_pair_v = false;
 
-template<class A, class B>
+template <class A, class B>
 inline constexpr bool is_pair_v<pair<A, B>> = true;
 
 template <class P>
@@ -106,4 +108,4 @@ using first_t = typename P::first_type;
 template <Pair P>
 using second_t = typename P::second_type;
 
-}
+} // namespace ctr
