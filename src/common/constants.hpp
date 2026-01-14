@@ -1,4 +1,5 @@
 #pragma once
+#include <type_traits>
 
 namespace ctr {
 
@@ -32,14 +33,14 @@ consteval bool is_left_paren(char c)
   return c == LEFTPAREN;
 }
 
-template <char C>
+template <class C>
 consteval int precedence()
 {
-  if constexpr (C == KLEENE)
+  if constexpr (std::is_same_v<C, ctr::ch<KLEENE>>)
     return KLEENE_PRECEDENCE;
-  else if constexpr (C == CONCAT)
+  else if constexpr (std::is_same_v<C, ctr::ch<CONCAT>>)
     return CONCAT_PRECEDENCE;
-  else if constexpr (C == ALT)
+  else if constexpr (std::is_same_v<C, ctr::ch<ALT>>)
     return ALT_PRECEDENCE;
   else
     return -1;
