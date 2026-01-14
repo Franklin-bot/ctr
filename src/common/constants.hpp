@@ -26,6 +26,10 @@ consteval bool is_operation(char c){
     return c==KLEENE || c==CONCAT || c==ALT;
 }
 
+consteval bool is_left_paren(char c){
+    return c==LEFTPAREN;
+}
+
 template<char C>
 consteval int precedence() {
     if constexpr (C==KLEENE) return KLEENE_PRECEDENCE;
